@@ -7,4 +7,5 @@ export interface ParamsStreamScrcpy extends ParamsStream {
     ws: string;
     fitToScreen?: boolean;
     videoSettings?: VideoSettings;
+    captureKeyboard?: boolean;
 }

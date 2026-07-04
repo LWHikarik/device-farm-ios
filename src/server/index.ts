@@ -30,6 +30,13 @@ async function loadGoogModules() {
 
     if (config.runLocalGoogTracker) {
         mw2List.push(DeviceTracker);
+        // Also expose the tracker as a plain-JSON WebSocket
+        // (?action=goog-device-list) on the top-level server, in addition to the
+        // binary multiplexer channel. This lets lightweight external clients read
+        // the device list without implementing the multiplexer (GTRC) protocol.
+        // DeviceTracker.processRequest only claims ACTION.GOOG_DEVICE_LIST, so
+        // this is inert for any other action.
+        mwList.push(DeviceTracker);
     }
 
     if (config.announceLocalGoogTracker) {
@@ -71,6 +78,13 @@ async function loadApplModules() {
 
     if (config.runLocalApplTracker) {
         mw2List.push(DeviceTracker);
+        // Also expose the tracker as a plain-JSON WebSocket
+        // (?action=appl-device-list) on the top-level server, in addition to the
+        // binary multiplexer channel. This lets lightweight external clients read
+        // the device list without implementing the multiplexer (GTRC) protocol.
+        // DeviceTracker.processRequest only claims ACTION.APPL_DEVICE_LIST, so
+        // this is inert for any other action.
+        mwList.push(DeviceTracker);
     }
 
     if (config.announceLocalApplTracker) {

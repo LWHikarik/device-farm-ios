@@ -158,6 +158,7 @@ export class StreamClientScrcpy
             player: Util.parseString(params, 'player', true),
             udid: Util.parseString(params, 'udid', true),
             ws: Util.parseString(params, 'ws', true),
+            captureKeyboard: Util.parseBoolean(params, 'captureKeyboard', false),
         };
     }
 
@@ -315,7 +316,9 @@ export class StreamClientScrcpy
         const googMoreBox = (this.moreBox = new GoogMoreBox(udid, player, this));
         const moreBox = googMoreBox.getHolderElement();
         googMoreBox.setOnStop(stop);
-        const googToolBox = GoogToolBox.createToolBox(udid, player, this, moreBox);
+        const googToolBox = GoogToolBox.createToolBox(udid, player, this, moreBox, {
+            captureKeyboard: this.params.captureKeyboard,
+        });
         this.controlButtons = googToolBox.getHolderElement();
         deviceView.appendChild(this.controlButtons);
         const video = document.createElement('div');
