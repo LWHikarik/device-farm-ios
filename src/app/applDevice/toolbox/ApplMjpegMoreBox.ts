@@ -1,13 +1,13 @@
 import { ApplMoreBox } from './ApplMoreBox';
 import { BasePlayer } from '../../player/BasePlayer';
-import { DefaultMjpegServerOption, MjpegServerOptions, WdaProxyClient } from '../client/WdaProxyClient';
+import { DefaultMjpegServerOption, MjpegServerOptions, IosControlClient } from '../client/IosControlClient';
 
 export class ApplMjpegMoreBox extends ApplMoreBox {
     private readonly framerateInput: HTMLInputElement;
     private readonly scalingFactorInput: HTMLInputElement;
     private readonly qualityInput: HTMLInputElement;
 
-    constructor(udid: string, player: BasePlayer, wdaConnection: WdaProxyClient) {
+    constructor(udid: string, player: BasePlayer, wdaConnection: IosControlClient) {
         super(udid, player, wdaConnection);
 
         const action = 'CHANGE_PARAMS';

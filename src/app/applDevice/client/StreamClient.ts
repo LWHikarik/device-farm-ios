@@ -3,7 +3,7 @@ import { ParamsStream } from '../../../types/ParamsStream';
 import { SimpleInteractionHandler } from '../../interactionHandler/SimpleInteractionHandler';
 import { BasePlayer, PlayerClass } from '../../player/BasePlayer';
 import ScreenInfo from '../../ScreenInfo';
-import { WdaProxyClient } from './WdaProxyClient';
+import { IosControlClient } from './IosControlClient';
 import { ACTION } from '../../../common/Action';
 import { ApplMoreBox } from '../toolbox/ApplMoreBox';
 import { ApplToolBox } from '../toolbox/ApplToolBox';
@@ -94,7 +94,7 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
 
     private waitForWda?: Promise<void>;
     protected touchHandler?: SimpleInteractionHandler;
-    protected readonly wdaProxy: WdaProxyClient;
+    protected readonly wdaProxy: IosControlClient;
     protected name: string;
     protected udid: string;
     protected deviceName = '';
@@ -106,7 +106,7 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
     protected constructor(params: T) {
         super(params);
         this.udid = this.params.udid;
-        this.wdaProxy = new WdaProxyClient({ ...this.params, action: ACTION.PROXY_WDA });
+        this.wdaProxy = new IosControlClient({ ...this.params, action: ACTION.PROXY_WDA });
         this.name = `[${TAG}:${this.udid}]`;
         this.videoWrapper = document.createElement('div');
         this.videoWrapper.className = `video`;

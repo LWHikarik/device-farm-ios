@@ -1,18 +1,18 @@
 import { StreamReceiver } from '../../client/StreamReceiver';
 import { BasePlayer, PlayerClass } from '../../player/BasePlayer';
 import { ACTION } from '../../../common/Action';
-import { StreamReceiverQVHack } from './StreamReceiverQVHack';
+import { IosStreamReceiver } from './IosStreamReceiver';
 import { StreamClient } from './StreamClient';
 import { ParamsStream } from '../../../types/ParamsStream';
 
-const TAG = '[StreamClientQVHack]';
+const TAG = '[IosStreamClient]';
 
-export class StreamClientQVHack extends StreamClient<ParamsStream> {
+export class IosStreamClient extends StreamClient<ParamsStream> {
     public static ACTION = ACTION.STREAM_WS_QVH;
     protected static players: Map<string, PlayerClass> = new Map<string, PlayerClass>();
 
-    public static start(params: ParamsStream): StreamClientQVHack {
-        return new StreamClientQVHack(params);
+    public static start(params: ParamsStream): IosStreamClient {
+        return new IosStreamClient(params);
     }
 
     private readonly streamReceiver: StreamReceiver<ParamsStream>;
@@ -28,18 +28,18 @@ export class StreamClientQVHack extends StreamClient<ParamsStream> {
             udid = udid.replace('-', '');
             udid = udid + '\0'.repeat(16);
         }
-        this.streamReceiver = new StreamReceiverQVHack({ ...this.params, udid });
+        this.streamReceiver = new IosStreamReceiver({ ...this.params, udid });
         this.startStream();
         this.setTitle(`${this.udid} stream`);
         this.setBodyClass('stream');
     }
 
     public static get action(): string {
-        return StreamClientQVHack.ACTION;
+        return IosStreamClient.ACTION;
     }
 
     public createPlayer(udid: string, playerName?: string): BasePlayer {
-        return StreamClientQVHack.createPlayer(udid, playerName);
+        return IosStreamClient.createPlayer(udid, playerName);
     }
 
     protected onViewVideoResize = (): void => {

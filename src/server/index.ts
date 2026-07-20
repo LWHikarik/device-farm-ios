@@ -62,7 +62,7 @@ loadPlatformModulesPromises.push(loadGoogModules());
 async function loadApplModules() {
     const { ControlCenter } = await import('./appl-device/services/ControlCenter');
     const { DeviceTracker } = await import('./appl-device/mw/DeviceTracker');
-    const { WebDriverAgentProxy } = await import('./appl-device/mw/WebDriverAgentProxy');
+    const { IosControlProxy } = await import('./appl-device/mw/IosControlProxy');
     const { AppiumRunner } = await import('./appl-device/services/AppiumRunner');
 
     // (Removed) the old `npmlog` log-level hack: it muted the in-process appium libs,
@@ -86,10 +86,10 @@ async function loadApplModules() {
     servicesToStart.push(AppiumRunner);
 
     /// #if USE_QVH_SERVER
-    const { QVHStreamProxy } = await import('./appl-device/mw/QVHStreamProxy');
-    mw2List.push(QVHStreamProxy);
+    const { IosVideoStreamProxy } = await import('./appl-device/mw/IosVideoStreamProxy');
+    mw2List.push(IosVideoStreamProxy);
     /// #endif
-    mw2List.push(WebDriverAgentProxy);
+    mw2List.push(IosControlProxy);
 }
 loadPlatformModulesPromises.push(loadApplModules());
 /// #endif

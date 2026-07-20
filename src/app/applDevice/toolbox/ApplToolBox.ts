@@ -4,13 +4,25 @@ import { BasePlayer } from '../../player/BasePlayer';
 import { ToolBoxButton } from '../../toolbox/ToolBoxButton';
 import { ToolBoxElement } from '../../toolbox/ToolBoxElement';
 import { ToolBoxCheckbox } from '../../toolbox/ToolBoxCheckbox';
-import { WdaProxyClient } from '../client/WdaProxyClient';
+import { IosControlClient } from '../client/IosControlClient';
 
+// iOS has no hardware back/app-switcher buttons: the DeviceKit backend
+// synthesizes them as system gestures (left-edge swipe / swipe-up-and-hold).
 const BUTTONS = [
+    {
+        title: 'Back',
+        name: 'back',
+        icon: SvgImage.Icon.BACK,
+    },
     {
         title: 'Home',
         name: 'home',
         icon: SvgImage.Icon.HOME,
+    },
+    {
+        title: 'App switcher',
+        name: 'appSwitcher',
+        icon: SvgImage.Icon.OVERVIEW,
     },
 ];
 
@@ -27,7 +39,7 @@ export class ApplToolBox extends ToolBox {
         udid: string,
         player: BasePlayer,
         client: StreamClient,
-        wdaConnection: WdaProxyClient,
+        wdaConnection: IosControlClient,
         moreBox?: HTMLElement,
     ): ApplToolBox {
         const playerName = player.getName();

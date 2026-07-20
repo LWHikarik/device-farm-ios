@@ -1,14 +1,14 @@
 import WS from 'ws';
 import { Mw } from '../../mw/Mw';
 import { ControlCenterCommand } from '../../../common/ControlCenterCommand';
-import { QvhackRunner } from '../services/QvhackRunner';
+import { IosVideoBridgeRunner } from '../services/IosVideoBridgeRunner';
 import { WebsocketProxy } from '../../mw/WebsocketProxy';
 import { Multiplexer } from '../../../packages/multiplexer/Multiplexer';
 import { ChannelCode } from '../../../common/ChannelCode';
 import Util from '../../../app/Util';
 
-export class QVHStreamProxy extends Mw {
-    public static readonly TAG = 'QVHStreamProxy';
+export class IosVideoStreamProxy extends Mw {
+    public static readonly TAG = 'IosVideoStreamProxy';
 
     public static processChannel(ws: Multiplexer, code: string, data: ArrayBuffer): Mw | undefined {
         if (code !== ChannelCode.QVHS) {
@@ -20,16 +20,16 @@ export class QVHStreamProxy extends Mw {
         const buffer = Buffer.from(data);
         const length = buffer.readInt32LE(0);
         const udid = Util.utf8ByteArrayToString(buffer.slice(4, 4 + length));
-        return new QVHStreamProxy(ws, udid);
+        return new IosVideoStreamProxy(ws, udid);
     }
 
-    private qvhProcess: QvhackRunner;
+    private qvhProcess: IosVideoBridgeRunner;
     private wsProxy?: WebsocketProxy;
     protected name: string;
     constructor(protected ws: Multiplexer, private readonly udid: string) {
         super(ws);
-        this.name = `[${QVHStreamProxy.TAG}][udid:${this.udid}]`;
-        this.qvhProcess = QvhackRunner.getInstance(udid);
+        this.name = `[${IosVideoStreamProxy.TAG}][udid:${this.udid}]`;
+        this.qvhProcess = IosVideoBridgeRunner.getInstance(udid);
         this.attachEventListeners();
     }
 

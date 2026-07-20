@@ -1,7 +1,7 @@
 import { ControlCenterCommand } from '../../../common/ControlCenterCommand';
 import { TypedEmitter } from '../../../common/TypedEmitter';
 import * as portfinder from 'portfinder';
-import { WDAMethod } from '../../../common/WDAMethod';
+import { IosControlMethod } from '../../../common/IosControlMethod';
 import { WdaStatus } from '../../../common/WdaStatus';
 import { AppiumRunner, requestJson } from './AppiumRunner';
 
@@ -24,7 +24,7 @@ const SCROLL_DURATION_SEC = 0.5;
  * (see {@link AppiumRunner}). One Appium server hosts many sessions; this class
  * owns exactly one session per device (udid).
  *
- * The WebSocket protocol with the browser (`WDAMethod`, the response envelope and
+ * The WebSocket protocol with the browser (`IosControlMethod`, the response envelope and
  * the `status-change` / `error` events) is intentionally unchanged.
  */
 export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
@@ -91,23 +91,34 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         const method = command.getMethod();
         const args = command.getArgs();
         switch (method) {
-            case WDAMethod.GET_SCREEN_WIDTH:
+            case IosControlMethod.GET_SCREEN_WIDTH:
                 return this.getScreenWidth();
-            case WDAMethod.CLICK:
+            case IosControlMethod.CLICK:
                 return this.executeMobile('mobile: tap', { x: args.x, y: args.y });
-            case WDAMethod.PRESS_BUTTON:
+            case IosControlMethod.LONG_PRESS:
+                return this.executeMobile('mobile: touchAndHold', {
+                    x: args.x,
+                    y: args.y,
+                    duration: typeof args.duration === 'number' ? Math.min(args.duration, 5) : 0.8,
+                });
+            case IosControlMethod.PRESS_BUTTON:
                 return this.executeMobile('mobile: pressButton', { name: args.name });
-            case WDAMethod.SCROLL:
+            case IosControlMethod.SCROLL:
+                // Use the real gesture duration when the client provides one
+                // (see SimpleInteractionHandler); WDA replays it as a drag.
                 return this.executeMobile('mobile: dragFromToForDuration', {
-                    duration: SCROLL_DURATION_SEC,
+                    duration:
+                        typeof args.duration === 'number' && args.duration > 0
+                            ? Math.min(args.duration, 3)
+                            : SCROLL_DURATION_SEC,
                     fromX: args.from.x,
                     fromY: args.from.y,
                     toX: args.to.x,
                     toY: args.to.y,
                 });
-            case WDAMethod.APPIUM_SETTINGS:
+            case IosControlMethod.APPIUM_SETTINGS:
                 return this.updateSettings(args.options);
-            case WDAMethod.SEND_KEYS:
+            case IosControlMethod.SEND_KEYS:
                 return this.executeMobile('mobile: keys', {
                     keys: Array.isArray(args.keys) ? args.keys : [args.keys],
                 });

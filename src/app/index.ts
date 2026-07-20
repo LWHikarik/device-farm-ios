@@ -38,22 +38,22 @@ window.onload = async function (): Promise<void> {
         const { DeviceTracker } = await import('./applDevice/client/DeviceTracker');
 
         /// #if USE_QVH_SERVER
-        const { StreamClientQVHack } = await import('./applDevice/client/StreamClientQVHack');
+        const { IosStreamClient } = await import('./applDevice/client/IosStreamClient');
 
-        DeviceTracker.registerTool(StreamClientQVHack);
+        DeviceTracker.registerTool(IosStreamClient);
 
         /// #if USE_WEBCODECS
         const { WebCodecsPlayer } = await import('./player/WebCodecsPlayer');
-        StreamClientQVHack.registerPlayer(WebCodecsPlayer);
+        IosStreamClient.registerPlayer(WebCodecsPlayer);
         /// #endif
 
         /// #if USE_H264_CONVERTER
-        const { MsePlayerForQVHack } = await import('./player/MsePlayerForQVHack');
-        StreamClientQVHack.registerPlayer(MsePlayerForQVHack);
+        const { IosMsePlayer } = await import('./player/IosMsePlayer');
+        IosStreamClient.registerPlayer(IosMsePlayer);
         /// #endif
 
-        if (action === StreamClientQVHack.ACTION && typeof parsedQuery.get('udid') === 'string') {
-            StreamClientQVHack.start(StreamClientQVHack.parseParameters(parsedQuery));
+        if (action === IosStreamClient.ACTION && typeof parsedQuery.get('udid') === 'string') {
+            IosStreamClient.start(IosStreamClient.parseParameters(parsedQuery));
             return;
         }
         /// #endif

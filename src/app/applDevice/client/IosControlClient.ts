@@ -6,13 +6,13 @@ import { ParamsWdaProxy } from '../../../types/ParamsWdaProxy';
 import { ACTION } from '../../../common/Action';
 import Util from '../../Util';
 import { ChannelCode } from '../../../common/ChannelCode';
-import { WDAMethod } from '../../../common/WDAMethod';
+import { IosControlMethod } from '../../../common/IosControlMethod';
 import ScreenInfo from '../../ScreenInfo';
 import Position from '../../Position';
 import Point from '../../Point';
-import { TouchHandlerListener } from '../../interactionHandler/SimpleInteractionHandler';
+import { GestureTrailPoint, TouchHandlerListener } from '../../interactionHandler/SimpleInteractionHandler';
 
-export type WdaProxyClientEvents = {
+export type IosControlClientEvents = {
     'wda-status': MessageRunWdaResponse;
     connected: boolean;
 };
@@ -38,10 +38,10 @@ export const DefaultMjpegServerOption: MjpegServerOptions = {
     mjpegServerScreenshotQuality: 25,
 };
 
-const TAG = '[WdaProxyClient]';
+const TAG = '[IosControlClient]';
 
-export class WdaProxyClient
-    extends ManagerClient<ParamsWdaProxy, WdaProxyClientEvents>
+export class IosControlClient
+    extends ManagerClient<ParamsWdaProxy, IosControlClientEvents>
     implements TouchHandlerListener
 {
     public static calculatePhysicalPoint(
@@ -179,7 +179,7 @@ export class WdaProxyClient
         if (this.screenWidth) {
             return this.screenWidth;
         }
-        const temp = await this.requestWebDriverAgent(WDAMethod.GET_SCREEN_WIDTH);
+        const temp = await this.requestWebDriverAgent(IosControlMethod.GET_SCREEN_WIDTH);
         if (temp.data.success && typeof temp.data.response === 'number') {
             return (this.screenWidth = temp.data.response);
         }
@@ -202,17 +202,17 @@ export class WdaProxyClient
         if (!mjpegServerScreenshotQuality || isNaN(mjpegServerScreenshotQuality)) {
             options.mjpegServerScreenshotQuality = DefaultMjpegServerOption.mjpegServerScreenshotQuality;
         }
-        return this.requestWebDriverAgent(WDAMethod.APPIUM_SETTINGS, { options });
+        return this.requestWebDriverAgent(IosControlMethod.APPIUM_SETTINGS, { options });
     }
 
     public async sendKeys(keys: string): Promise<void> {
-        return this.requestWebDriverAgent(WDAMethod.SEND_KEYS, {
+        return this.requestWebDriverAgent(IosControlMethod.SEND_KEYS, {
             keys,
         });
     }
 
     public async pressButton(name: string): Promise<void> {
-        return this.requestWebDriverAgent(WDAMethod.PRESS_BUTTON, {
+        return this.requestWebDriverAgent(IosControlMethod.PRESS_BUTTON, {
             name,
         });
     }
@@ -222,27 +222,44 @@ export class WdaProxyClient
             return;
         }
         const screenWidth = this.screenWidth || (await this.getScreenWidth());
-        const point = WdaProxyClient.calculatePhysicalPoint(this.screenInfo, screenWidth, position);
+        const point = IosControlClient.calculatePhysicalPoint(this.screenInfo, screenWidth, position);
         if (!point) {
             return;
         }
-        return this.requestWebDriverAgent(WDAMethod.CLICK, {
+        return this.requestWebDriverAgent(IosControlMethod.CLICK, {
             x: point.x,
             y: point.y,
         });
     }
 
-    public async performScroll(from: Position, to: Position): Promise<void> {
+    public async performLongPress(position: Position, duration: number): Promise<void> {
+        if (!this.screenInfo) {
+            return;
+        }
+        const screenWidth = this.screenWidth || (await this.getScreenWidth());
+        const point = IosControlClient.calculatePhysicalPoint(this.screenInfo, screenWidth, position);
+        if (!point) {
+            return;
+        }
+        return this.requestWebDriverAgent(IosControlMethod.LONG_PRESS, {
+            x: point.x,
+            y: point.y,
+            duration,
+        });
+    }
+
+    public async performScroll(from: Position, to: Position, trail?: GestureTrailPoint[]): Promise<void> {
         if (!this.screenInfo) {
             return;
         }
         const wdaScreen = this.screenWidth || (await this.getScreenWidth());
-        const fromPoint = WdaProxyClient.calculatePhysicalPoint(this.screenInfo, wdaScreen, from);
-        const toPoint = WdaProxyClient.calculatePhysicalPoint(this.screenInfo, wdaScreen, to);
+        const fromPoint = IosControlClient.calculatePhysicalPoint(this.screenInfo, wdaScreen, from);
+        const toPoint = IosControlClient.calculatePhysicalPoint(this.screenInfo, wdaScreen, to);
         if (!fromPoint || !toPoint) {
             return;
         }
-        return this.requestWebDriverAgent(WDAMethod.SCROLL, {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const args: any = {
             from: {
                 x: fromPoint.x,
                 y: fromPoint.y,
@@ -251,7 +268,25 @@ export class WdaProxyClient
                 x: toPoint.x,
                 y: toPoint.y,
             },
-        });
+        };
+        // The recorded mouse trail (device points + per-point timing) lets the
+        // backend replay the gesture with its real speed and curve. `from`/`to`
+        // stay for backends that only support straight drags (WDA).
+        if (trail && trail.length >= 2) {
+            const t0 = trail[0].t;
+            const points: Array<{ x: number; y: number; t: number }> = [];
+            for (const { position, t } of trail) {
+                const point = IosControlClient.calculatePhysicalPoint(this.screenInfo, wdaScreen, position);
+                if (point) {
+                    points.push({ x: point.x, y: point.y, t: t - t0 });
+                }
+            }
+            if (points.length >= 2) {
+                args.points = points;
+                args.duration = Math.max((trail[trail.length - 1].t - t0) / 1000, 0.05);
+            }
+        }
+        return this.requestWebDriverAgent(IosControlMethod.SCROLL, args);
     }
 
     public async runWebDriverAgent(): Promise<MessageRunWdaResponse> {
@@ -267,7 +302,7 @@ export class WdaProxyClient
         return response as MessageRunWdaResponse;
     }
 
-    public async requestWebDriverAgent(method: WDAMethod, args?: any): Promise<any> {
+    public async requestWebDriverAgent(method: IosControlMethod, args?: any): Promise<any> {
         if (!this.hasSession) {
             throw Error('No session');
         }

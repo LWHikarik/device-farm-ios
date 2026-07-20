@@ -4,7 +4,7 @@ import Util from '../../Util';
 import { ParamsStream } from '../../../types/ParamsStream';
 import { ChannelCode } from '../../../common/ChannelCode';
 
-export class StreamReceiverQVHack extends StreamReceiver<ParamsStream> {
+export class IosStreamReceiver extends StreamReceiver<ParamsStream> {
     public static parseParameters(params: URLSearchParams): ParamsStream {
         const typedParams = super.parseParameters(params);
         const { action } = typedParams;

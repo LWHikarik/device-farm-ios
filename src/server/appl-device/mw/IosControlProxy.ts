@@ -2,16 +2,21 @@ import WS from 'ws';
 import { Mw } from '../../mw/Mw';
 import { ControlCenterCommand } from '../../../common/ControlCenterCommand';
 import { WdaRunner } from '../services/WDARunner';
+import { DeviceKitControlRunner } from '../services/DeviceKitControlRunner';
 import { MessageRunWdaResponse } from '../../../types/MessageRunWdaResponse';
 import { Multiplexer } from '../../../packages/multiplexer/Multiplexer';
 import { ChannelCode } from '../../../common/ChannelCode';
 import Util from '../../../app/Util';
 import { WdaStatus } from '../../../common/WdaStatus';
 
-export class WebDriverAgentProxy extends Mw {
-    public static readonly TAG = 'WebDriverAgentProxy';
+// Interactive iOS control backend: 'devicekit' (default; talks to the same
+// DeviceKit agent that streams video) or 'wda' (legacy WebDriverAgent via Appium).
+const CONTROL_BACKEND = (process.env.WS_SCRCPY_IOS_CONTROL || 'devicekit').toLowerCase();
+
+export class IosControlProxy extends Mw {
+    public static readonly TAG = 'IosControlProxy';
     protected name: string;
-    private wda?: WdaRunner;
+    private wda?: WdaRunner | DeviceKitControlRunner;
 
     public static processChannel(ws: Multiplexer, code: string, data: ArrayBuffer): Mw | undefined {
         if (code !== ChannelCode.WDAP) {
@@ -23,12 +28,12 @@ export class WebDriverAgentProxy extends Mw {
         const buffer = Buffer.from(data);
         const length = buffer.readInt32LE(0);
         const udid = Util.utf8ByteArrayToString(buffer.slice(4, 4 + length));
-        return new WebDriverAgentProxy(ws, udid);
+        return new IosControlProxy(ws, udid);
     }
 
     constructor(protected ws: Multiplexer, private readonly udid: string) {
         super(ws);
-        this.name = `[${WebDriverAgentProxy.TAG}][udid: ${this.udid}]`;
+        this.name = `[${IosControlProxy.TAG}][udid: ${this.udid}]`;
     }
 
     private runWda(command: ControlCenterCommand): void {
@@ -48,23 +53,24 @@ export class WebDriverAgentProxy extends Mw {
             this.sendMessage(message);
             return;
         }
-        this.wda = WdaRunner.getInstance(udid);
+        this.wda = CONTROL_BACKEND === 'wda' ? WdaRunner.getInstance(udid) : DeviceKitControlRunner.getInstance(udid);
+        console.log(`${this.name} control backend: ${CONTROL_BACKEND}`);
         this.wda.on('status-change', ({ status, code, text }) => {
             this.onStatusChange(command, status, code, text);
         });
-        // WdaRunner emits 'error' when WebDriverAgent fails to launch (e.g. xcodebuild
-        // signing failure, code 65). Without an 'error' listener Node's EventEmitter
-        // re-throws it and crashes the whole server. Handle it: keep the stream alive,
-        // just report that control is unavailable.
+        // The runner emits 'error' when the backend fails to start (WDA: xcodebuild
+        // signing failure code 65; DeviceKit: agent not reachable). Without an 'error'
+        // listener Node's EventEmitter re-throws it and crashes the whole server.
+        // Handle it: keep the stream alive, just report that control is unavailable.
         this.wda.on('error', (error: Error) => {
-            console.error(`${this.name}, WDA failed to start: ${error.message}`);
+            console.error(`${this.name}, control backend failed to start: ${error.message}`);
             this.onStatusChange(command, WdaStatus.STOPPED, -1, error.message);
         });
         if (this.wda.isStarted()) {
             this.onStatusChange(command, WdaStatus.STARTED);
         } else {
             this.wda.start().catch((error: Error) => {
-                console.error(`${this.name}, WDA start rejected: ${error.message}`);
+                console.error(`${this.name}, control backend start rejected: ${error.message}`);
                 this.onStatusChange(command, WdaStatus.STOPPED, -1, error.message);
             });
         }
@@ -120,7 +126,7 @@ export class WebDriverAgentProxy extends Mw {
         try {
             command = ControlCenterCommand.fromJSON(event.data.toString());
         } catch (error: any) {
-            console.error(`[${WebDriverAgentProxy.TAG}], Received message: ${event.data}. Error: ${error.message}`);
+            console.error(`[${IosControlProxy.TAG}], Received message: ${event.data}. Error: ${error.message}`);
             return;
         }
         const type = command.getType();

@@ -1,7 +1,7 @@
 import '../../../style/morebox.css';
 import { BasePlayer } from '../../player/BasePlayer';
 import Size from '../../Size';
-import { WdaProxyClient } from '../client/WdaProxyClient';
+import { IosControlClient } from '../client/IosControlClient';
 
 const TAG = '[ApplMoreBox]';
 
@@ -13,7 +13,7 @@ export class ApplMoreBox {
     private stopListener?: StopListener;
     private readonly holder: HTMLElement;
 
-    constructor(udid: string, player: BasePlayer, wdaConnection: WdaProxyClient) {
+    constructor(udid: string, player: BasePlayer, wdaConnection: IosControlClient) {
         const playerName = player.getName();
         const moreBox = document.createElement('div');
         moreBox.className = 'more-box';

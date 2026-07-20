@@ -1,20 +1,20 @@
 import * as portfinder from 'portfinder';
 import { ProcessRunner, ProcessRunnerEvents } from '../../services/ProcessRunner';
 
-export class QvhackRunner extends ProcessRunner<ProcessRunnerEvents> {
-    private static instances: Map<string, QvhackRunner> = new Map();
+export class IosVideoBridgeRunner extends ProcessRunner<ProcessRunnerEvents> {
+    private static instances: Map<string, IosVideoBridgeRunner> = new Map();
     public static SHUTDOWN_TIMEOUT = 15000;
-    public static getInstance(udid: string): QvhackRunner {
+    public static getInstance(udid: string): IosVideoBridgeRunner {
         let instance = this.instances.get(udid);
         if (!instance) {
-            instance = new QvhackRunner(udid);
+            instance = new IosVideoBridgeRunner(udid);
             this.instances.set(udid, instance);
             instance.start();
         }
         instance.lock();
         return instance;
     }
-    protected TAG = '[QvhackRunner]';
+    protected TAG = '[IosVideoBridgeRunner]';
     protected name: string;
     protected cmd = 'ws-qvh';
     protected releaseTimeoutId?: NodeJS.Timeout;
@@ -45,8 +45,8 @@ export class QvhackRunner extends ProcessRunner<ProcessRunnerEvents> {
         }
         this.releaseTimeoutId = setTimeout(() => {
             super.release();
-            QvhackRunner.instances.delete(this.udid);
-        }, QvhackRunner.SHUTDOWN_TIMEOUT);
+            IosVideoBridgeRunner.instances.delete(this.udid);
+        }, IosVideoBridgeRunner.SHUTDOWN_TIMEOUT);
     }
 
     protected async getArgs(): Promise<string[]> {

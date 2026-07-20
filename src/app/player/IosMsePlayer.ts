@@ -3,7 +3,7 @@ import Size from '../Size';
 import VideoSettings from '../VideoSettings';
 import { DisplayInfo } from '../DisplayInfo';
 
-export class MsePlayerForQVHack extends MsePlayer {
+export class IosMsePlayer extends MsePlayer {
     public static readonly preferredVideoSettings: VideoSettings = new VideoSettings({
         lockedVideoOrientation: -1,
         bitrate: 8000000,
@@ -18,7 +18,7 @@ export class MsePlayerForQVHack extends MsePlayer {
         udid: string,
         displayInfo?: DisplayInfo,
         name = 'MSE_Player_For_QVHack',
-        tag = MsePlayerForQVHack.createElement(),
+        tag = IosMsePlayer.createElement(),
     ) {
         super(udid, displayInfo, name, tag);
     }
@@ -28,7 +28,7 @@ export class MsePlayerForQVHack extends MsePlayer {
     }
 
     public getPreferredVideoSetting(): VideoSettings {
-        return MsePlayerForQVHack.preferredVideoSettings;
+        return IosMsePlayer.preferredVideoSettings;
     }
 
     public setVideoSettings(): void {

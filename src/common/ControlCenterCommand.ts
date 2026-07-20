@@ -1,4 +1,4 @@
-import { WDAMethod } from './WDAMethod';
+import { IosControlMethod } from './IosControlMethod';
 
 export class ControlCenterCommand {
     public static KILL_SERVER = 'kill_server';
@@ -65,7 +65,7 @@ export class ControlCenterCommand {
     public getId(): number {
         return this.id;
     }
-    public getMethod(): WDAMethod | string {
+    public getMethod(): IosControlMethod | string {
         return this.method;
     }
     public getData(): any {
